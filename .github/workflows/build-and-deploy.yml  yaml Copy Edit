@@ -1,0 +1,31 @@
+name: Build and Deploy to ECR
+
+on:
+  repository_dispatch:
+    types: [trigger-build]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup SSH Key
+        run: |
+          echo "${{ secrets.KEY }}" > key.pem
+          chmod 600 key.pem
+
+      - name: SSH into EC2 and Build + Push
+        run: |
+          ssh -o StrictHostKeyChecking=no -i key.pem ${{ secrets.USERNAME }}@${{ secrets.HOST }} << 'EOF'
+            cd ~/your-project-path
+            git pull origin main
+
+            aws ecr get-login-password --region ${{ secrets.REGION }} | docker login --username AWS --password-stdin ${{ secrets.ECR_REPO }}
+
+            docker build -t my-app .
+            docker tag my-app:latest ${{ secrets.ECR_REPO }}:latest
+            docker push ${{ secrets.ECR_REPO }}:latest
+          EOF

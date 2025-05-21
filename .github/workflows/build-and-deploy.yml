@@ -1,31 +1,31 @@
-name: Build and Deploy to ECR
+name: Build and Deploy
 
 on:
   repository_dispatch:
-    types: [trigger-build]
+    types: [start-build]
 
 jobs:
-  deploy:
+  build:
+    name: SSH & Docker Build
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+      - name: Configure AWS Credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: arn:aws:iam::448397505978:role/GitHubOIDCRole
+          aws-region: us-east-1
 
-      - name: Setup SSH Key
+      - name: Connect to EC2 & Build
         run: |
-          echo "${{ secrets.KEY }}" > key.pem
-          chmod 600 key.pem
-
-      - name: SSH into EC2 and Build + Push
-        run: |
-          ssh -o StrictHostKeyChecking=no -i key.pem ${{ secrets.USERNAME }}@${{ secrets.HOST }} << 'EOF'
-            cd /home/ubuntu/docker
-            git pull origin main
-
-            aws ecr get-login-password --region ${{ secrets.REGION }} | docker login --username AWS --password-stdin ${{ secrets.ECR_REPO }}
-
+          ssh -o StrictHostKeyChecking=no ubuntu@<EC2_PUBLIC_IP> << 'EOF'
+            cd /home/ubuntu/app
             docker build -t my-app .
-            docker tag my-app:latest ${{ secrets.ECR_REPO }}:latest
-            docker push ${{ secrets.ECR_REPO }}:latest
+            aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 123456789012.dkr.ecr.us-east-1.amazonaws.com
+            docker tag my-app:latest 123456789012.dkr.ecr.us-east-1.amazonaws.com/my-app:latest
+            docker push 123456789012.dkr.ecr.us-east-1.amazonaws.com/my-app:latest
           EOF
+

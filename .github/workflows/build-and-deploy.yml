@@ -22,7 +22,7 @@ jobs:
       - name: Connect to EC2 & Build
         run: |
           ssh -o StrictHostKeyChecking=no ubuntu@35.171.16.82 << 'EOF'
-            cd /home/ubuntu/app
+            cd /home/ubuntu/docker
             docker build -t my-app .
             aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 448397505978.dkr.ecr.us-east-1.amazonaws.com
             docker tag my-app:latest 448397505978.dkr.ecr.us-east-1.amazonaws.com/my-app:latest

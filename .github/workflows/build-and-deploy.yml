@@ -16,7 +16,7 @@ jobs:
       - name: Configure AWS Credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v2
         with:
-          role-to-assume: arn:aws:iam::YOUR_ACCOUNT_ID:role/GitHubOIDCRole   # <-- Replace YOUR_ACCOUNT_ID and Role name here
+          role-to-assume: arn:aws:iam::arn:aws:iam::448397505978:role/GitHubOIDCRole   # <-- Replace YOUR_ACCOUNT_ID and Role name here
           aws-region: us-east-1
 
       - name: Connect to EC2 & Build
